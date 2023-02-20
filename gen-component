@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+const { buildJSTemplate } = require('./helpers/templateHelper')
+
+const [,, FILE] = process.argv
+
+buildJSTemplate(FILE, 'js_component.handlebars')

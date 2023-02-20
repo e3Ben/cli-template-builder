@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+const {exec, spawn} = require('child_process')
+const {resolve, parse} = require('path')
+const {existsSync, read} = require('fs')
+const {readFile, lstat} = require('fs/promises')
+const {pipe, trim, split, map, reduce} = require('ramda')
+const {EOL} = require('os')
+
+const [,, MIGRATION_NAME] = process.argv
+
+
+
+const doesFileExist = async file => {
+    const exists = existsSync(file)
+    if(exists)
+    {
+        const stat = await lstat(file)
+        return stat.isFile()
+    }
+    return false
+}
+
+const parseEnv = env => pipe(
+    trim,
+    split(EOL),
+    map(split('=')),
+    map(x => ({
+        key: x[0],
+        value: x[1]
+   })),
+   reduce((acc, curr) => {
+        acc[curr.key] = curr.value
+        return acc
+   },{})
+)(env)
+
+const readEnvFile = async file => {
+    const envPath = resolve(process.cwd(), file)
+    const exists = await doesFileExist(envPath)
+    
+    if(!exists)
+    {
+        throw Error('File not found: ' + envPath)
+    }
+    else
+    {
+        const envString = await readFile(envPath, { encoding: 'utf-8' })
+        return parseEnv(envString)
+    }
+}
+
+const main = async () => {
+    const {SOLUTION_DIR, STARTUP_DIR, DATA_DIR} = await readEnvFile('settings.env')
+    
+    if(MIGRATION_NAME === undefined || MIGRATION_NAME === null || MIGRATION_NAME.trim() === '')
+        console.log('Please supply a migration name')
+    else
+    {
+        const child = exec(`cd ${SOLUTION_DIR} && dotnet ef migrations add ${MIGRATION_NAME} -c DataContext -p ${DATA_DIR} -s ${STARTUP_DIR}`, (err, stdout, stderr) => {
+            if(err)
+                console.log(err)
+            if(stdout)
+                console.log(stdout)
+            if(stderr)
+                console.log(stderr)
+        })
+        child.st
+    }
+}
+main()

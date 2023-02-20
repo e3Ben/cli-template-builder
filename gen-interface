@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+const { buildCSharpTemplate } = require('./helpers/templateHelper')
+
+const [,, FILE] = process.argv
+
+buildCSharpTemplate(FILE, 'cs_interface.handlebars')
